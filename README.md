@@ -1,4 +1,4 @@
-Okazaki
+Okasaki
 =======
 
-Solutions for Purely Functional Data Structures 
+Solutions for Purely Functional Data Structures by Chris Okasaki
