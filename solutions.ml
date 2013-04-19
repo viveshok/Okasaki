@@ -1,4 +1,11 @@
 
+(* Some notes on syntax from SML to OCaml:
+    * 'signature' becomes 'module type'
+    * 'structure' becomes 'module'
+    *)
+
+(* CHAPTER 2 *)
+
 exception AlreadyThere
 exception NotFound
 
@@ -186,4 +193,48 @@ module FiniteMap =
         end
 
 module StringMap = FiniteMap(OrderedString);;
+
+(* CHAPTER 3 *)
+
+(* 3.1 *)
+(* By definition, any right child node has a left sibling. Therefore
+ * all right subtree will have a size smaller or equal to its
+ * sibling left subtree.
+ *
+ * By induction, the size of a subtree whose root node has rank M is
+ * greater or equal to:
+     *
+     * 1 if M = 0
+     * 2 x size of a subtree whose root node has rank M-1
+ *
+ * the recursive function above can be expressed has
+ * 
+ *                                                M 
+ *                                               ___
+ * size of subtree whose root node has rank M >= | | 2 = 2^M
+ *                                               i=1
+ *
+ * reversing this equation around we get:
+ * 
+ * rank of root node of tree of size N <= log(N)
+ *
+ *)
+
+(* 3.2 *)
+
+module type HEAP =
+    sig
+        module Element: ORDERED
+
+        type t
+
+        val empty: t
+        val isEmpty: t -> bool
+
+        val insert: Element.t -> t -> t
+        val merge: t -> t -> t
+
+        val findMin: t -> Element.t option
+        val deleteMin: t -> t option
+    end;;
 
