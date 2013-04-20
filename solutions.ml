@@ -1,13 +1,14 @@
 
 (* Some notes on syntax from SML to OCaml:
-    * 'signature' becomes 'module type'
-    * 'structure' becomes 'module'
+    * signature -> module type
+    * structure -> module
     *)
 
 (* CHAPTER 2 *)
 
 exception AlreadyThere
 exception NotFound
+exception Empty
 
 (* 2.1 *)
 let suffixes lst = 
@@ -237,4 +238,53 @@ module type HEAP =
         val findMin: t -> Element.t option
         val deleteMin: t -> t option
     end;;
+
+module LeftistHeap =
+    functor (Element: ORDERED) ->
+        struct
+            module Elem = Element
+
+            type t = E | T of int * Elem.t * t * t
+
+            let empty = E
+
+            let isEmpty = function
+                | E -> true
+                | _ -> false
+            ;;
+
+            let rec rank = function
+                | E -> 0
+                | T(_, _, _, right_node) -> rank right_node
+            ;;
+
+            let makeT elem a b =
+                if rank a >= rank b then T(rank b + 1, elem, a, b)
+                else T(rank a + 1, elem, b, a)
+            ;;
+
+            let rec merge a b =
+                match a, b with
+                | a, E -> a
+                | E, b -> b
+                | T(_, x, a1, b1), T(_, y, a2, b2) ->
+                        if Elem.leq x y then makeT x a1 (merge b1 b)
+                        else makeT y a2 (merge a b2)
+            ;;
+
+            let insert x a =
+                merge (T(1, x, E,E)) a
+            ;;
+
+            let findMin = function
+                | E -> raise Empty
+                | T(_, x, _, _) -> x
+            ;;
+
+            let deleteMin = function
+                | E -> raise Empty
+                | T(_, _, a, b) -> merge a b
+            ;;
+
+        end
 

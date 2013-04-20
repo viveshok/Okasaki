@@ -2,4 +2,6 @@ _build*
 *.native
 *.cm*
 *.byte
+*.out
+*.swp
 
