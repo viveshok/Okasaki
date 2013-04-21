@@ -4,11 +4,26 @@
     * structure -> module
     *)
 
-(* CHAPTER 2 *)
-
 exception AlreadyThere
 exception NotFound
 exception Empty
+exception SmtgWrong
+
+(* Some helper functions *)
+
+let split lst = 
+    (* Split a list in two mergesort style, O(N) *)
+    let rec aux lst left right =
+        match lst, left, right with
+        | [], left, right -> (List.rev(right), left)
+        | [_], _::left_tl, right -> (List.rev(right), left_tl)
+        | _::_::tl, _::left_tl, _::right_tl -> aux tl left_tl right_tl
+        | _, _, _ -> raise SmtgWrong
+    in aux lst lst (List.rev(lst))
+;;
+
+
+(* CHAPTER 2 *)
 
 (* 2.1 *)
 let suffixes lst = 
@@ -255,7 +270,7 @@ module LeftistHeap =
 
             let rec rank = function
                 | E -> 0
-                | T(_, _, _, right_node) -> rank right_node
+                | T(_, _, _, right_node) -> 1 + rank right_node
             ;;
 
             let makeT elem a b =
@@ -272,8 +287,93 @@ module LeftistHeap =
                         else makeT y a2 (merge a b2)
             ;;
 
+            (*
             let insert x a =
                 merge (T(1, x, E,E)) a
+            ;;
+            *)
+
+            (* Exercise 3.2 *)
+            let rec insert x heap =
+                match heap with
+                | E -> T(1, x, E, E)
+                | T(_, y, _, _) when Elem.lt x y -> makeT x heap E   
+                | T(_, y, a, b) -> makeT y a (insert x b)   
+            ;;
+
+            let findMin = function
+                | E -> raise Empty
+                | T(_, x, _, _) -> x
+            ;;
+
+            let deleteMin = function
+                | E -> raise Empty
+                | T(_, _, a, b) -> merge a b
+            ;;
+
+            (* 3.3 *)
+            let fromList lst =
+                let nodeLst = List.map (fun a -> T(1, a, E, E)) lst in
+                let rec aux lst =
+                    match split lst with
+                    | [a], [] -> a
+                    | [], [b] -> b
+                    | [T(_, _, E, E) as a], [T(_, _, E, E) as b] -> merge a b
+                    | lstA, lstB -> merge (aux lstA) (aux lstB)
+                in aux nodeLst
+            ;;
+
+        end
+
+(* 3.4 (a) *)
+(*
+ * By construction any right subtree of a weight-based leftist heap 
+ * has size at most half the size of its parent. Therefore a weight-
+ * biased leftist heap of size N can have at most log(N) nested right
+ * subtree. Hence a right spine can have at most rank log(N) + 1.
+ * *)
+
+(* 3.4 (b) *)
+module WeightBiasedLeftistHeap =
+    functor (Element: ORDERED) ->
+        struct
+            module Elem = Element
+
+            type t = E | T of int * Elem.t * t * t
+
+            let empty = E
+
+            let isEmpty = function
+                | E -> true
+                | _ -> false
+            ;;
+
+            let rec size = function
+                | E -> 0
+                | T(_, _, _, right_node) -> 1 + size right_node
+            ;;
+
+            let makeT elem a b =
+                if size a >= size b then T(size a + 1, elem, a, b)
+                else T(size b + 1, elem, b, a)
+            ;;
+
+            (* 3.4 (c) *)
+            let rec merge a b =
+                match a, b with
+                | a, E -> a
+                | E, b -> b
+                | T(s1, x, a1, b1), T(s2, y, a2, b2) when Elem.leq x y ->
+                        T(s1+s2, x, (merge b a1), b1)
+                | T(s1, x, a1, b1), T(s2, y, a2, b2) ->
+                        T(s1+s2, y, (merge a a2), b2)
+            ;;
+
+            let rec insert x heap =
+                match heap with
+                | E -> T(1, x, E, E)
+                | T(_, y, _, _) when Elem.lt x y -> makeT x heap E   
+                | T(_, y, a, b) -> makeT y a (insert x b)   
             ;;
 
             let findMin = function
@@ -287,4 +387,11 @@ module LeftistHeap =
             ;;
 
         end
+
+(* 3.4 (d) *)
+(* In a lazy environment, the heaps would be merged if and only if the minimum
+ * of the resulting heap is queried, In a concurrent environment, sub-heaps
+ * could be easily merged in different concurrency contexts without sharing
+ * much memory.
+ * *)
 
