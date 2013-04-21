@@ -235,8 +235,8 @@ module type HEAP =
         val insert: Element.t -> t -> t
         val merge: t -> t -> t
 
-        val findMin: t -> Element.t option
-        val deleteMin: t -> t option
+        val findMin: t -> Element.t
+        val deleteMin: t -> t
     end;;
 
 module LeftistHeap =
